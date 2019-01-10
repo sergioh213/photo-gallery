@@ -29,27 +29,28 @@ const Icon = styled.i`
     color: white;
 `
 
-class ExampleComponent extends Component {
+class AdminNavBar extends Component {
     constructor(props) {
         super(props)
 
         this.state = {}
     }
-    componentDidMount() {
-        // this.props.dispatch(getProfile());
-    }
-    logout() {
-        console.log("logout function happening");
-        axios.post("/logout").then()
-    }
+
+    componentDidMount() {}
+
     render() {
-        console.log("regular nav bar rendering");
+        console.log("admin nav bar rendering");
         return (
             <Main>
                 <NavButton><Link to="/"><Icon className="fas fa-home"></Icon></Link></NavButton>
+                <div>
+                    <NavButton><Link to="/admin"><Icon className="fas fa-th"></Icon></Link></NavButton>
+                    <NavButton><Link to="/admin/security"><Icon className="fas fa-key"></Icon></Link></NavButton>
+                    <NavButton><a href="/logout"><Icon className="fas fa-sign-out-alt"></Icon></a></NavButton>
+                </div>
             </Main>
         )
     }
 }
 
-export default connect(mapStateToProps)(ExampleComponent)
+export default connect(mapStateToProps)(AdminNavBar)

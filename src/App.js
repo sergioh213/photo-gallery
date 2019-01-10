@@ -1,20 +1,19 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Route } from 'react-router-dom'
-import NavBar from './NavBar'
 import MainPage from './MainPage'
-import AdminPage from './AdminPage'
-import Session from './Session'
+import Login from './Login'
+import NavBar from './NavBar'
 
 class App extends Component {
     render() {
+        console.log("Regular app rendering. Location: ", location.pathname);
         return (
             <div className="App">
-                <NavBar />
                 <BrowserRouter>
                     <div>
+                        <NavBar />
                         <Route exact path='/' component={MainPage} />
-                        <Route path='/admin' component={AdminPage} />
-                        <Route path='/session' component={Session} />
+                        <Route path='/login' component={Login} />
                     </div>
                 </BrowserRouter>
             </div>

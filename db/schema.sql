@@ -1,10 +1,33 @@
--- DROP TABLE IF EXISTS producers;
+-- DROP TABLE IF EXISTS previews;
 -- DROP TABLE IF EXISTS production_facilities;
 
 CREATE TABLE login (
     id SERIAL PRIMARY KEY,
     pass VARCHAR(500) NOT NULL,
     email VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE album (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(500) NOT NULL,
+    description VARCHAR(1500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE photos (
+    id SERIAL PRIMARY KEY,
+    album_id INT REFERENCES album(id),
+    img_url VARCHAR(500) NOT NULL,
+    filename VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE previews (
+    id SERIAL PRIMARY KEY,
+    album_id INT REFERENCES album(id),
+    img_url VARCHAR(500) NOT NULL,
+    filename VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
