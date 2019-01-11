@@ -44,8 +44,9 @@ const ImageName = styled.div`
     width: 100%;
     text-align: center;
     height: 10%;
+    padding: 5px;
     display: flex;
-    background-color: red;
+    background-color: cyan;
     justify-content: center;
 `
 

@@ -42,7 +42,8 @@ exports.upload = function(req, res, next) {
             }
         });
     } else if (req.files) {
-        req.files.forEach(fileToSend => {
+        var counter = 0
+        req.files.forEach((fileToSend, i, array) => {
             const s3Request = client.put(fileToSend.filename, {
                 // first two are headers for amazon to serve the file
                 'Content-Type': fileToSend.mimetype,
@@ -57,8 +58,14 @@ exports.upload = function(req, res, next) {
             s3Request.on('response', s3Response => {
                 // console.log(s3Response.statusCode);
                 if (s3Response.statusCode == 200) {
-                    next()
                     fs.unlink(fileToSend.path, () => 0)
+                    counter++
+                    if (i+1 === array.length) {
+                        console.log("ALL FILES FINISHED AT S3");
+                        setTimeout(() => {
+                            next()
+                        }, 100)
+                    }
                 } else {
                     return res.json({
                         error: true

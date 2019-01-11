@@ -45,7 +45,6 @@ var saveImagesOnDb = function(files) {
     var finalizedImages = []
     files.forEach(singleFile => {
         db.saveImageNoAlbum(config.s3Url + singleFile.filename, singleFile.originalname).then(storedImg => {
-            console.log("CHECKING RETURNED IMG OBJ FROM db: ", storedImg);
             finalizedImages.push(storedImg)
         })
     })
@@ -96,7 +95,6 @@ app.get('/email.json', (req, res) => {
 
 app.post('/update-info.json', (req, res) => {
     console.log("/update-info.json post happening");
-    console.log("req.body: ", req.body);
     if (!req.body.password && req.body.email) {
         db.updateEmail(req.body.email).then(data => {
             res.json({
@@ -115,7 +113,6 @@ app.post('/update-info.json', (req, res) => {
     } else {
         bcrypt.hashPassword(req.body.password).then(hashedPassword => {
             db.updateEmailAndPassword(req.body.email, hashedPassword).then(data => {
-                console.log("DATA AFTER SAVING: ", data);
                 res.json({
                     success: "both",
                     email: data.email
@@ -127,7 +124,6 @@ app.post('/update-info.json', (req, res) => {
 
 app.post('/admin.json', (req, res) => {
     console.log("/admin.json post happening");
-    console.log("req.body: ", req.body);
     db.getPassword().then(({pass}) => {
         bcrypt.checkPassword(req.body.password, pass)
             .then(passwordsMatch => {
@@ -147,7 +143,6 @@ app.post('/admin.json', (req, res) => {
 app.get("/photos.json", (req, res) => {
     console.log("/email.json get happening");
     db.getPhotos().then(data => {
-        console.log("Photos data: ", data);
             if (data) {
                 res.json(data);
             }
@@ -159,7 +154,6 @@ app.get("/previews.json", function(req, res) {
     console.log("/previews.json get happening");
 
     db.getPreviews().then(data => {
-        console.log("previews to be sent: ", data);
             if (data) {
                 res.json(data);
             }
@@ -172,13 +166,10 @@ app.post("/save-images.json", (req, res) => {
 
     var savedImages = []
 
-    console.log("HERE, req.body: ", req.body);
-
     req.body.forEach(singleFile => {
         db.saveImageNoAlbum(singleFile.img_url, singleFile.filename).then(async storedImg => {
             savedImages.push(storedImg)
             if (req.body.length === savedImages.length) {
-                console.log("SEND RESPONSE");
                 await db.rebootPreviewsTable()
                 await res.status(200).json({
                     success: true,
@@ -190,14 +181,15 @@ app.post("/save-images.json", (req, res) => {
 })
 
 app.post('/upload-images.json', uploader.array('file',10), s3.upload, async (req, res) => {
+    console.log("This happens after S3?");
 
     var finalizedImages = []
 
     req.files.forEach(singleFile => {
         db.savePreviewImageNoAlbum(config.s3Url + singleFile.filename, singleFile.originalname).then(storedImg => {
             finalizedImages.push(storedImg)
-            console.log("PROBLEM HERE???? ", storedImg);
             if (req.files.length === finalizedImages.length) {
+                console.log("SEND RESPONSE Server");
                 res.status(200).json({
                     success: true,
                     finalizedImages: finalizedImages
@@ -206,6 +198,18 @@ app.post('/upload-images.json', uploader.array('file',10), s3.upload, async (req
         })
     })
 
+})
+
+app.post("/delete-preview.json", async (rew, res) => {
+    console.log("/delete-preview happening");
+    await db.rebootPreviewsTable()
+    await db.getPreviews().then(data => {
+        console.log("checking if previews are deleted");
+            if (!data || data.length === 0) {
+                console.log("previews deleted succesfully. Sending response");
+                res.json({ success: true });
+            }
+        })
 })
 
 // app.post('/upload-images.json', uploader.array('file',10), s3.upload, async (req, res) => {
@@ -234,7 +238,7 @@ app.post('/upload-images.json', uploader.array('file',10), s3.upload, async (req
 
 app.get("/admin", (req, res) => {
     console.log("/admin route");
-    if(!req.session.active) {
+    if (!req.session.active) {
         console.log("/admin => no session, redirecting to '/'");
         res.redirect("/")
     } else {
@@ -243,8 +247,20 @@ app.get("/admin", (req, res) => {
     }
 })
 
+app.get("/admin/home", (req, res) => {
+    console.log("/admin route");
+    if (!req.session.active) {
+        console.log("/admin/home => no session, redirecting to '/'");
+        res.redirect("/")
+    } else {
+        console.log("/admin/home with session");
+        res.sendFile(__dirname + '/index.html');
+    }
+})
+
 app.get("/login", (req, res) => {
-    if(req.session.user){
+    if (req.session.active) {
+        console.log("redirecting to /admin")
         res.redirect("/admin")
     } else {
         res.sendFile(__dirname + '/index.html');
@@ -252,8 +268,10 @@ app.get("/login", (req, res) => {
 })
 
 app.get("/", (req, res) => {
-    if(req.session.user){
-        res.redirect("/admin")
+    console.log("/ route");
+    if (req.session.active) {
+        console.log("/ => with session, redirecting to '/admin/home'");
+        res.redirect("/admin/home")
     } else {
         res.sendFile(__dirname + '/index.html');
     }
@@ -271,9 +289,9 @@ app.get('*', function(req, res) {
     if (!req.session.active) {
         console.log("no session");
         res.redirect("/")
-    } else if (req.session.active){
-        console.log("session ongoing");
-        res.sendFile(__dirname + '/index.html');
+    } else if (req.session.active) {
+        console.log("redirecting to /admin")
+        res.redirect("/admin")
     }
 });
 

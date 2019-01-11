@@ -36,18 +36,32 @@ class AdminNavBar extends Component {
         this.state = {}
     }
 
-    componentDidMount() {}
+    // componentDidMount() {
+    //     console.log("Admin nav bar mounts: ", this.props);
+    //     console.log("Admin nav bar mounts: ", this.props.match.params);
+    // }
+    //
+    // componentDidUpdate() {
+    //     console.log("Admin nav bar updates: ", this.props);
+    //     console.log("Admin nav bar updates: ", this.props.match.params);
+    // }
+    //
+    // static getDerivedStateFromProps(nextProps, state) {
+    //     console.log("getDerivedStateFromProps: ", nextProps);
+    // }
 
     render() {
         console.log("admin nav bar rendering");
         return (
             <Main>
-                <NavButton><Link to="/"><Icon className="fas fa-home"></Icon></Link></NavButton>
-                <div>
-                    <NavButton><Link to="/admin"><Icon className="fas fa-th"></Icon></Link></NavButton>
-                    <NavButton><Link to="/admin/security"><Icon className="fas fa-key"></Icon></Link></NavButton>
-                    <NavButton><a href="/logout"><Icon className="fas fa-sign-out-alt"></Icon></a></NavButton>
-                </div>
+                <NavButton><Link to="/admin/home"><Icon className="fas fa-home"></Icon></Link></NavButton>
+                { this.props.match.params.extension === "home" ? null :
+                    <div>
+                        <NavButton><Link to="/admin"><Icon className="fas fa-th"></Icon></Link></NavButton>
+                        <NavButton><Link to="/admin/security"><Icon className="fas fa-key"></Icon></Link></NavButton>
+                        <NavButton><a href="/logout"><Icon className="fas fa-sign-out-alt"></Icon></a></NavButton>
+                    </div>
+                }
             </Main>
         )
     }

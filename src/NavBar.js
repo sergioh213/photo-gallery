@@ -44,9 +44,10 @@ class ExampleComponent extends Component {
     }
     render() {
         console.log("regular nav bar rendering");
+        console.log("NAV BAR this.props: ", this.props);
         return (
             <Main>
-                <NavButton><Link to="/"><Icon className="fas fa-home"></Icon></Link></NavButton>
+                <NavButton><Link to={this.props.admin ? "/admin/home" : "/"}><Icon className="fas fa-home"></Icon></Link></NavButton>
             </Main>
         )
     }

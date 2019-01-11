@@ -88,7 +88,6 @@ exports.savePreviewImageNoAlbum = async function(imageUrl, filename) {
 
 exports.getPreviews = function() {
     return db.query(`SELECT * FROM previews;`).then(results => {
-        console.log("results.rows: ", results.rows);
         return results.rows
     })
 }

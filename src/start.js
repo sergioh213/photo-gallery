@@ -13,7 +13,7 @@ const store = createStore(reducer, composeWithDevTools(applyMiddleware(reduxProm
 
 let component;
 
-if ( (location.pathname == "/admin") || (location.pathname == "/admin/security") ) {
+if ( (location.pathname == "/admin" || (location.pathname.indexOf('/admin') != -1)) ) {
     console.log("START location /admin");
     component = (
         <Provider store={ store }>

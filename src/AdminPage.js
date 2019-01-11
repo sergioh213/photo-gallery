@@ -31,9 +31,6 @@ const LabelButton = styled.label`
     border: 1px grey solid;
     cursor: pointer;
 `
-const UploadButton = styled.button`
-    position: relative;
-`
 const Grid = styled.div`
     position: relative;
     display: grid;
@@ -57,7 +54,7 @@ const GridItem = styled.div`
 const Image = styled.img`
     position: relative;
     width: 100%;
-    max-height: 90%;
+    max-height: 85%;
     object-fit: cover;
     object-position: center;
 `
@@ -71,14 +68,17 @@ const ImageName = styled.div`
     position: relative;
     width: 100%;
     text-align: center;
-    height: 10%;
+    height: 15%;
     display: flex;
-    background-color: red;
+    padding: 5px;
+    background-color: cyan;
     justify-content: center;
+    align-items: center;
 `
 const DeleteButton = styled.button`
     position: absolute;
-    color: white;
+    color: cyan;
+    font-weight: bold;
     top: 5px;
     right: 5px;
 `
@@ -88,6 +88,36 @@ const Tip = styled.div`
     text-align: center;
     font-size: 12px;
     color: grey;
+`
+const SelectionButtonWrapper = styled.div`
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+`
+const LeftButton = styled.button`
+    position: relative;
+    width: 150px;
+    margin-right: 40px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px;
+`
+const UploadButton = styled.button`
+    position: relative;
+    width: 150px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px;
+`
+const RightButton = styled.button`
+    position: relative;
+    width: 150px;
+    margin-left: 40px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px;
 `
 
 class AdminPage extends Component {
@@ -103,7 +133,9 @@ class AdminPage extends Component {
         this.imageSelected = this.imageSelected.bind(this)
         this.upload = this.upload.bind(this)
         this.removeFile = this.removeFile.bind(this)
+        this.deleteSelection = this.deleteSelection.bind(this)
         this.saveSelection = this.saveSelection.bind(this)
+        this.addToAlbum = this.addToAlbum.bind(this)
     }
     componentDidMount() {
         axios.get("/previews.json").then(({data}) => {
@@ -182,6 +214,19 @@ class AdminPage extends Component {
         })
     }
 
+    deleteSelection() {
+        axios.post("/delete-preview.json").then(({data}) => {
+            console.log("Data received after deleting: ", data);
+            if (data.success) {
+                this.setState({ finalizedImages: null, selectedFiles: [], savedImages: null })
+            }
+        })
+    }
+
+    addToAlbum() {
+        console.log("add to album happening");
+    }
+
     render() {
         console.log("Main page of admin rendering");
         return (
@@ -220,9 +265,11 @@ class AdminPage extends Component {
                 { this.state.finalizedImages &&
                     <div>
                         <Title>Previsualizacion lista</Title>
-                        <ButtonWrapper>
+                        <SelectionButtonWrapper>
+                            <LeftButton onClick={ this.deleteSelection } name="button">Cancelar selection</LeftButton>
                             <UploadButton onClick={ this.saveSelection } name="button">Comfirmar seleccion</UploadButton>
-                        </ButtonWrapper>
+                            <RightButton onClick={ this.addToAlbum } name="button">Añadir seleccion a un album</RightButton>
+                        </SelectionButtonWrapper>
                         <Tip>(Si hay imagenes rotas, refresca la pagina)</Tip>
                         <Grid>
                             { this.state.finalizedImages.map(item => {
