@@ -141,7 +141,7 @@ app.post('/admin.json', (req, res) => {
 })
 
 app.get("/photos.json", (req, res) => {
-    console.log("/email.json get happening");
+    console.log("/photos.json get happening");
     db.getPhotos().then(data => {
             if (data) {
                 res.json(data);
@@ -149,39 +149,116 @@ app.get("/photos.json", (req, res) => {
         })
 });
 
+app.get("/all.json", (req, res) => {
+    console.log("/all.json get happening");
+    db.getAlbums().then(async allAlbums => {
+        console.log("albums received from db: ", allAlbums);
+        if (allAlbums.length) {
+            console.log("albums detected")
+            var albumsWithPhotos = []
+            await allAlbums.map(album => {
+                console.log("Single album: ", album);
+                var singleAlbum = {
+                    ...album,
+                    photos: []
+                }
+                db.getPhotosByAlbumId(album.id).then(photos => {
+                    console.log("All photos of that album: ", photos);
+                    console.log("photos detected in album");
+                    singleAlbum.photos = photos
+                    console.log("singleAlbum object after adding photos: ", singleAlbum);
+                    albumsWithPhotos.push(singleAlbum)
+                    if (allAlbums.length === albumsWithPhotos.length) {
+                        console.log("albumsWithPhotos before sending: ", albumsWithPhotos);
+                        res.json(albumsWithPhotos);
+                    }
+                })
+            })
+        }
+    })
+});
+
+app.post("/add-previews-to-album.json", (req, res) => {
+    console.log("/add-previews-to-album.json    req.body: ", req.body);
+    db.addAlbumToPreviews(req.body.id).then(data => {
+        console.log("addAlbumToPreviews data received from db: ", data);
+        if (data) {
+            res.json({
+                success: true,
+                album: data[0].album_id
+             })
+        }
+    })
+})
+
 app.get("/previews.json", function(req, res) {
 
     console.log("/previews.json get happening");
 
     db.getPreviews().then(data => {
-            if (data) {
-                res.json(data);
+            if (data.length) {
+                console.log("looking for data[0]: ", data[0]);
+                console.log("looking for data[0].album_id: ", data[0].album_id);
+                if (data[0].album_id) {
+                    db.getAlbumById(data[0].album_id).then(album => {
+                        res.json({
+                            previews: data,
+                            album: album
+                        })
+                    })
+                } else {
+                    res.json({ previews: data });
+                }
             }
         })
 
 });
 
 app.post("/save-images.json", (req, res) => {
-    console.log("/save-images.json happening");
+    console.log("/save-images.json happening. req.body: ", req.body);
 
-    var savedImages = []
+    let savedImages = []
 
-    req.body.forEach(singleFile => {
-        db.saveImageNoAlbum(singleFile.img_url, singleFile.filename).then(async storedImg => {
-            savedImages.push(storedImg)
-            if (req.body.length === savedImages.length) {
-                await db.rebootPreviewsTable()
-                await res.status(200).json({
-                    success: true,
-                    savedImages: savedImages
-                })
-            }
+    if (req.body.albumSelected) {
+        console.log("SAVING WITH ALBUM");
+        req.body.finalizedImages.forEach(singleFile => {
+            console.log("inside of loop: ", singleFile);
+            db.saveImageWithAlbum(req.body.albumSelected.id, singleFile.img_url, singleFile.filename).then(async storedImg => {
+                console.log("after saving");
+                savedImages.push(storedImg)
+                if (req.body.finalizedImages.length === savedImages.length) {
+                    console.log("Length reached");
+                    await db.rebootPreviewsTable()
+                    await res.status(200).json({
+                        success: true,
+                        savedImages: savedImages
+                    })
+                }
+            })
         })
-    })
+    } else {
+        console.log("SAVING WITHOUT ALBUM");
+        req.body.finalizedImages.forEach(singleFile => {
+            console.log("inside of loop: ", singleFile);
+            db.saveImageNoAlbum(singleFile.img_url, singleFile.filename).then(async storedImg => {
+                console.log("after saving");
+                savedImages.push(storedImg)
+                if (req.body.finalizedImages.length === savedImages.length) {
+                    console.log("Length reached");
+                    await db.rebootPreviewsTable()
+                    await res.status(200).json({
+                        success: true,
+                        savedImages: savedImages
+                    })
+                }
+            })
+        })
+    }
 })
 
 app.post('/upload-images.json', uploader.array('file',10), s3.upload, async (req, res) => {
     console.log("This happens after S3?");
+    console.log("req: ", req);
 
     var finalizedImages = []
 
@@ -210,6 +287,21 @@ app.post("/delete-preview.json", async (rew, res) => {
                 res.json({ success: true });
             }
         })
+})
+
+app.get("/albums.json", (req, res) => {
+    db.getAlbums().then(data => {
+        console.log("DATA from albums on server: ", data);
+        res.json(data)
+    })
+})
+
+app.post("/create-album.json", (req, res) => {
+    console.log("/create-album req.body: ", req.body);
+    db.saveAlbum(req.body.name, req.body.description).then(data => {
+        console.log("data after save album: ", data);
+        res.json(data)
+    })
 })
 
 // app.post('/upload-images.json', uploader.array('file',10), s3.upload, async (req, res) => {

@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import styled from 'styled-components'
 import axios from './axios'
+import AlbumModal from './AlbumModal'
 
 const Main = styled.div`
     position: relative;
@@ -35,11 +36,11 @@ const Grid = styled.div`
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    grid-template-rows: repeat(2, 220px);
     grid-gap: 10px;
     margin: 20px;
     text-align: center;
 `
+// grid-template-rows: repeat(2, 220px);
 const GridItem = styled.div`
     position: relative;
     width: 100%;
@@ -62,6 +63,15 @@ const Title = styled.div`
     position: relative;
     margin-top: 20px;
     width: 100%;
+    text-align: center;
+`
+const AlbumTitle = styled.div`
+    position: relative;
+    margin-top: 40px;
+    width: 100%;
+    color: darkgreen
+    font-weight: 400;
+    font-size: 18px;
     text-align: center;
 `
 const ImageName = styled.div`
@@ -127,7 +137,8 @@ class AdminPage extends Component {
         this.state = {
             submit: false,
             selectFile: true,
-            selectedFiles: []
+            selectedFiles: [],
+            showAlbumModal: false
         }
 
         this.imageSelected = this.imageSelected.bind(this)
@@ -135,13 +146,19 @@ class AdminPage extends Component {
         this.removeFile = this.removeFile.bind(this)
         this.deleteSelection = this.deleteSelection.bind(this)
         this.saveSelection = this.saveSelection.bind(this)
+        this.toggleShowAlbumModal = this.toggleShowAlbumModal.bind(this)
         this.addToAlbum = this.addToAlbum.bind(this)
     }
+
     componentDidMount() {
         axios.get("/previews.json").then(({data}) => {
             console.log("data HERE LOOKING FOR previews: ", data);
-            if (data.length > 0) {
-                this.setState({ finalizedImages: data })
+            if (data && data.previews && data.previews.length > 0) {
+                if (data.album) {
+                    this.setState({ finalizedImages: data.previews, albumSelected: data.album })
+                } else {
+                    this.setState({ finalizedImages: data.previews })
+                }
             }
         })
     }
@@ -192,7 +209,7 @@ class AdminPage extends Component {
     saveSelection() {
         console.log("save selection happening");
 
-        axios.post("/save-images.json", this.state.finalizedImages).then(({data}) => {
+        axios.post("/save-images.json", this.state).then(({data}) => {
             console.log("IMAGES SUCCESFULLY SAVED: ", data);
             if (data.success && data.savedImages.length > 0) {
                 this.setState({
@@ -206,7 +223,8 @@ class AdminPage extends Component {
                             uploadSuccess: true,
                             savedImages: null,
                             finalizedImages: null,
-                            selectedFiles: []
+                            selectedFiles: [],
+                            albumSelected: null
                         })
                     }, 2500)
                 })
@@ -218,19 +236,39 @@ class AdminPage extends Component {
         axios.post("/delete-preview.json").then(({data}) => {
             console.log("Data received after deleting: ", data);
             if (data.success) {
-                this.setState({ finalizedImages: null, selectedFiles: [], savedImages: null })
+                this.setState({ finalizedImages: null, selectedFiles: [], savedImages: null, albumSelected: null })
             }
         })
     }
 
-    addToAlbum() {
+    toggleShowAlbumModal() {
+        this.setState({ showAlbumModal: !this.state.showAlbumModal })
+    }
+
+    addToAlbum(albumSelected) {
         console.log("add to album happening");
+        console.log("albumSelected: ", albumSelected);
+        if (albumSelected.name) {
+            axios.post("/add-previews-to-album.json", albumSelected).then(({data}) => {
+                console.log("Data received after adding album to existing previews: ", data);
+                if (data.success) {
+                    console.log("album selected and it is not default: ", albumSelected.name);
+                    this.setState({ albumSelected: albumSelected, showAlbumModal: false })
+                }
+            })
+        }
     }
 
     render() {
         console.log("Main page of admin rendering");
         return (
             <Main>
+                { this.state.showAlbumModal &&
+                        <AlbumModal toggleShowAlbumModal={this.toggleShowAlbumModal} addToAlbum={this.addToAlbum} />
+                }
+                { this.state.albumSelected &&
+                    <AlbumTitle>{`Imagenes siendo añadidas a el album: ${this.state.albumSelected.name}`}</AlbumTitle>
+                }
                 { !this.state.finalizedImages &&
                     <div>
                         { (!this.state.selectedFiles || (this.state.selectedFiles && this.state.selectedFiles.length === 0)) &&
@@ -268,7 +306,7 @@ class AdminPage extends Component {
                         <SelectionButtonWrapper>
                             <LeftButton onClick={ this.deleteSelection } name="button">Cancelar selection</LeftButton>
                             <UploadButton onClick={ this.saveSelection } name="button">Comfirmar seleccion</UploadButton>
-                            <RightButton onClick={ this.addToAlbum } name="button">Añadir seleccion a un album</RightButton>
+                            <RightButton onClick={ this.toggleShowAlbumModal } name="button">Añadir seleccion a un album</RightButton>
                         </SelectionButtonWrapper>
                         <Tip>(Si hay imagenes rotas, refresca la pagina)</Tip>
                         <Grid>
